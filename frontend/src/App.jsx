@@ -10,6 +10,7 @@ function App() {
   const [currentConversation, setCurrentConversation] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const activeConversationIdRef = useRef(null);
+  const activeRequestConversationIdRef = useRef(null);
 
   // Load conversations on mount
   useEffect(() => {
@@ -25,7 +26,7 @@ function App() {
 
   useEffect(() => {
     activeConversationIdRef.current = currentConversationId;
-    setIsLoading(false);
+    setIsLoading(activeConversationIdRef.current === activeRequestConversationIdRef.current);
   }, [currentConversationId]);
 
   const loadConversations = async () => {
@@ -69,6 +70,8 @@ function App() {
     const requestConversationId = currentConversationId;
     const isActiveRequest = () =>
       activeConversationIdRef.current === requestConversationId;
+
+    activeRequestConversationIdRef.current = requestConversationId;
 
     if (!isActiveRequest()) return;
 
@@ -179,12 +182,22 @@ function App() {
             case 'complete':
               // Stream complete, reload conversations list
               loadConversations();
-              setIsLoading(false);
+              if (activeRequestConversationIdRef.current === requestConversationId) {
+                activeRequestConversationIdRef.current = null;
+              }
+              if (isActiveRequest()) {
+                setIsLoading(false);
+              }
               break;
 
             case 'error':
               console.error('Stream error:', event.message);
-              setIsLoading(false);
+              if (activeRequestConversationIdRef.current === requestConversationId) {
+                activeRequestConversationIdRef.current = null;
+              }
+              if (isActiveRequest()) {
+                setIsLoading(false);
+              }
               break;
 
             default:
@@ -194,6 +207,9 @@ function App() {
       );
     } catch (error) {
       console.error('Failed to send message:', error);
+      if (activeRequestConversationIdRef.current === requestConversationId) {
+        activeRequestConversationIdRef.current = null;
+      }
       // Remove optimistic messages on error
       if (isActiveRequest()) {
         setCurrentConversation((prev) => ({
