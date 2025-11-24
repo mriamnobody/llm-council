@@ -113,7 +113,8 @@ function App() {
         requestConversationId,
         content,
         (eventType, event) => {
-          if (!isActiveRequest()) return;
+          const isActive = isActiveRequest();
+          if (!isActive && eventType !== 'complete' && eventType !== 'error') return;
 
           switch (eventType) {
             case 'stage1_start':
@@ -185,7 +186,7 @@ function App() {
               if (activeRequestConversationIdRef.current === requestConversationId) {
                 activeRequestConversationIdRef.current = null;
               }
-              if (isActiveRequest()) {
+              if (isActive) {
                 setIsLoading(false);
               }
               break;
@@ -195,7 +196,7 @@ function App() {
               if (activeRequestConversationIdRef.current === requestConversationId) {
                 activeRequestConversationIdRef.current = null;
               }
-              if (isActiveRequest()) {
+              if (isActive) {
                 setIsLoading(false);
               }
               break;
